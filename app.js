@@ -59,28 +59,16 @@ const addEmployee = () => {
             }
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'role',
             message: "Enter employee's role",
-            validate: roleInput => {
-                if (roleInput) {
-                    return true;
-                } else {
-                    console.log("Please enter employee's role!")
-                }
-            }
+            choices: ['']
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'manager',
             message: "Enter employee's manager",
-            validate: managerInput => {
-                if (managerInput) {
-                    return true;
-                } else {
-                    console.log("Please enter employee's manager!")
-                }
-            }
+            choices: ['']
         },
     ])
 };
@@ -133,16 +121,10 @@ const addRole = () => {
            } 
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'department',
             message: "Enter role department",
-            validate: departmentInput => {
-                if (departmentInput) {
-                    return true;
-                } else {
-                    console.log("Please enter role department!")
-                }
-           } 
+            choices: ['']
         }
     ])
 };

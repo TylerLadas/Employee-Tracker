@@ -1,13 +1,16 @@
+-- drop database if existing the create new database
 DROP DATABASE IF EXISTS employee_tracker;
 CREATE DATABASE employee_tracker;
 
 USE employee_tracker;
 
+-- creates department table
 CREATE TABLE department (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL
 );
 
+-- creates role table
 CREATE TABLE role (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title  VARCHAR(30) NOT NULL,
@@ -16,6 +19,7 @@ CREATE TABLE role (
     FOREIGN KEY (department_id) REFERENCES department(id)
 );
 
+-- creates employee table
 CREATE TABLE employee (
     id INT PRIMARY KEY AUTO_INCREMENT,
     first_name VARCHAR(30) NOT NULL,
