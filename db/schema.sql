@@ -1,6 +1,7 @@
-DROP TABLE IF EXISTS department;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS employee;
+DROP DATABASE IF EXISTS employee_tracker;
+CREATE DATABASE employee_tracker;
+
+USE employee_tracker;
 
 CREATE TABLE department (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -20,7 +21,10 @@ CREATE TABLE employee (
     first_name VARCHAR(30) NOT NULL,
     last_name VARCHAR(30) NOT NULL,
     role_id INT NOT NULL,
-    manager_id INT NOT NULL,
+    manager_id INT,
     FOREIGN KEY (role_id) REFERENCES role(id),
     FOREIGN KEY (manager_id) REFERENCES employee(id)
 );
+
+-- Prevents ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails due to no REFERENCE id exists on initial table creation
+SET FOREIGN_KEY_CHECKS=0;
