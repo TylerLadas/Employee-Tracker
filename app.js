@@ -96,7 +96,7 @@ const viewAllRoles = () => {
     })
 };
 
-// view all rolles function
+// view all rolls function
 const viewAllDepartments = () => {
     const sql = `SELECT department.name AS department FROM department`;
 
@@ -110,8 +110,26 @@ const viewAllDepartments = () => {
     })
 };
 
+
+
+// // query function for employee roles to use in addEmployees()
+// managerQuery = () => {
+//     const managerArray = [];
+
+//     db.query(`SELECT CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL`, (err, res) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         for (i = 0; i < res.length; i++){
+//             managerArray.push(res[i])
+//         }
+//     })
+//     return managerArray;
+// };
+
 // add employees prompts
 const addEmployee = () => {
+    
     inquirer
     .prompt([
         {
@@ -122,7 +140,7 @@ const addEmployee = () => {
                 if (nameInput) {
                     return true;
                 } else {
-                    console.log("Please enter employee's first name!")
+                    console.log("Please enter employee's first name!");
                 }
             }
         },
@@ -134,24 +152,76 @@ const addEmployee = () => {
                 if (nameInput) {
                     return true;
                 } else {
-                    console.log("Please enter employee's last name!")
+                    console.log("Please enter employee's last name!");
                 }
             }
-        },
-        {
-            type: 'list',
-            name: 'role',
-            message: "Enter employee's role",
-            choices: ['']
-        },
-        {
-            type: 'list',
-            name: 'manager',
-            message: "Enter employee's manager",
-            choices: ['']
-        },
+        }
     ])
+    .then(answers => {
+        const params = [answers.firstName, answers.lastName]
+
+        // query function for employee roles
+        db.query(`SELECT role.id, role.title FROM role`, (err, res) => {
+            if (err) {
+                console.log(err);
+            }
+
+            const roles = res.map(({ id, title}) => ({ name: title, value: id}));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'role',
+                    message: "Enter employee's role",
+                    choices: roles
+                }
+            ])
+            .then(roleAnswer => {
+                const role = roleAnswer.role
+                params.push(role);
+
+                db.query(`SELECT * FROM employee WHERE manager_id IS NULL`, (err, res) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    const managers = res.map(({ id, first_name, last_name }) => ({name: first_name + " " + last_name, value: id}))
+
+                    inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'manager',
+                            message: "Enter employee's manager",
+                            choices: managers
+                        }
+                    ])
+                    .then(managerAnswer => {
+                        const manager = managerAnswer.manager
+                        params.push(manager);
+
+                        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) 
+                                  Values (?, ?, ?, ?)`, params, (err, res) => {
+                                      if (err) {
+                                          console.log(err);
+                                      }
+                                      console.log("-----------------------------------------------------------------------------------")
+                                      console.log("Employee successfully added!")
+
+                            viewAllEmployees();
+                        })
+                    });
+                });
+            });
+        });
+    });  
 };
+            
+    
+        
+
+
+
+
+      
 
 // add department prompts
 const addDepartment = () => {
@@ -218,4 +288,3 @@ const updateEmployee = () => {
         }
     ])
 };
-
