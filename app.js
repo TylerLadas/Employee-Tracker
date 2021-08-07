@@ -49,7 +49,7 @@ const toDo = () => {
         } else if (toDo === 'Add Department') {
             return addDepartment();
         } else if (toDo === 'Update Employee Role') {
-            return updateEmployee();
+            return updateEmployeeRole();
         }
     })
 };
@@ -109,23 +109,6 @@ const viewAllDepartments = () => {
         toDo();
     })
 };
-
-
-
-// // query function for employee roles to use in addEmployees()
-// managerQuery = () => {
-//     const managerArray = [];
-
-//     db.query(`SELECT CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL`, (err, res) => {
-//         if (err) {
-//             console.log(err);
-//         }
-//         for (i = 0; i < res.length; i++){
-//             managerArray.push(res[i])
-//         }
-//     })
-//     return managerArray;
-// };
 
 // add employees prompts
 const addEmployee = () => {
@@ -206,7 +189,7 @@ const addEmployee = () => {
                                       console.log("-----------------------------------------------------------------------------------")
                                       console.log("Employee successfully added!")
 
-                            viewAllEmployees();
+                            toDo();
                         })
                     });
                 });
@@ -215,21 +198,13 @@ const addEmployee = () => {
     });  
 };
             
-    
-        
-
-
-
-
-      
-
 // add department prompts
 const addDepartment = () => {
     inquirer
     .prompt([
         {
             type: 'input',
-            name: 'departmet',
+            name: 'department',
             message: "Enter department name",
             validate: departmentInput => {
                 if (departmentInput) {
@@ -240,6 +215,19 @@ const addDepartment = () => {
            } 
         }
     ])
+    .then(answer => {
+
+        db.query(`INSERT INTO department (name) VALUES (?)`, answer.department, (err, res) => {
+            if (err) {
+                console.log(err);
+            }
+            console.log("------------------------------");
+            console.log("Department successfully added!");
+            console.log("------------------------------");
+
+            toDo();
+        })
+    })
 };
 
 // add role prompts
@@ -266,21 +254,49 @@ const addRole = () => {
                 if (salaryInput) {
                     return true;
                 } else {
-                    console.log("Please enter role salary!")
+                    console.log("Please enter role salary!");
                 }
            } 
-        },
-        {
-            type: 'list',
-            name: 'department',
-            message: "Enter role department",
-            choices: ['']
         }
     ])
+        .then(answers => {
+            const params = [answers.role, answers.salary]
+            
+            db.query(`SELECT * FROM department`, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                const departments = res.map(({id, name}) => ({name: name, value: id}));
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'department',
+                        message: "Enter role department",
+                        choices: departments
+                    }
+                ])
+                .then(deptanswer => {
+                    const department = deptanswer.department;
+                    params.push(department);
+
+                    db.query(`INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`, params, (err, res) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                        console.log("------------------------");
+                        console.log("Role successfully added!");
+                        console.log("------------------------");
+            
+                        toDo();
+                });
+            });
+        });
+    });
 };
 
 // update employee prompts
-const updateEmployee = () => {
+const updateEmployeeRole = () => {
     inquirer
     .prompt([
         {
