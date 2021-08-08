@@ -42,7 +42,12 @@ const toDo = () => {
                       'Update Employee Role', 
                       'Update Employee Manager', 
                       'View Employees by Manager', 
-                      'View Employees by Department']
+                      'View Employees by Department',
+                      'Delete Employee',
+                      'Delete Role',
+                      'Delete Department',
+                      'View Department Budget'
+                    ]
         }
     ])
     .then(data => {
@@ -68,6 +73,14 @@ const toDo = () => {
             return viewByManager();
         } else if (toDo === 'View Employees by Department') {
             return viewByDepartment();
+        } else if (toDo === 'Delete Employee') {
+            return deleteEmployee();
+        } else if (toDo === 'Delete Role') {
+            return deleteRole();
+        } else if (toDo === 'Delete Department') {
+            return deleteDepartment();
+        } else if (toDo === 'View Department Budjet') {
+            return departmentBudget();
         }
     })
 };
@@ -501,3 +514,109 @@ const viewByDepartment = () => {
         });
     });
 };
+
+const deleteEmployee = () => {
+    db.query(`SELECT * FROM employee`, (err, res) => {
+        if(err) {
+            console.log(err);
+        }
+        const employees = res.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: 'Select employee to delete',
+                choices: employees
+            }
+        ])
+        .then(empAnswer => {
+            const emp = empAnswer.employee;
+            const params = []
+
+            params.push(emp);
+            
+            db.query(`DELETE FROM employee WHERE id = ?`, emp, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log("------------------------------");
+                        console.log("Employee successfully deleted!");
+                        console.log("------------------------------");
+            
+                        toDo(); 
+            });
+        });
+    });
+};
+
+const deleteRole = () => {
+    db.query(`SELECT * FROM role`, (err, res) => {
+        if(err) {
+            console.log(err);
+        }
+        const roles = res.map(({ id, title }) => ({ name:title ,value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'role',
+                message: 'Select role to delete',
+                choices: roles
+            }
+        ])
+        .then(roleAnswer => {
+            const role = roleAnswer.role;
+            
+            db.query(`DELETE FROM role WHERE id = ? `, role, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log("------------------------------");
+                        console.log("Role successfully deleted!");
+                        console.log("------------------------------");
+            
+                        toDo(); 
+            });
+        });
+    });
+};
+
+const deleteDepartment = () => {
+    db.query(`SELECT * FROM department`, (err, res) => {
+        if(err) {
+            console.log(err);
+        }
+        const departments = res.map(({ id, name }) => ({ name: name, value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'department',
+                message: 'Select department to delete',
+                choices: departments
+            }
+        ])
+        .then(deptAnswer => {
+            const dept = deptAnswer.department;
+            
+            db.query(`DELETE FROM department WHERE id = ?`, dept, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log("--------------------------------");
+                        console.log("Department successfully deleted!");
+                        console.log("--------------------------------");
+            
+                        toDo(); 
+            });
+        });
+    });
+};
+
+const departmentBudget = () => {
+
+}
