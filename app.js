@@ -79,7 +79,7 @@ const toDo = () => {
             return deleteRole();
         } else if (toDo === 'Delete Department') {
             return deleteDepartment();
-        } else if (toDo === 'View Department Budjet') {
+        } else if (toDo === 'View Department Budget') {
             return departmentBudget();
         }
     })
@@ -618,5 +618,33 @@ const deleteDepartment = () => {
 };
 
 const departmentBudget = () => {
-
+    db.query(`SELECT * FROM department`, (err, res) => {
+        if(err) {
+            console.log(err);
+        }
+        const departments = res.map(({id, name}) => ({ name: name, value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'department',
+                message: 'Select department budget',
+                choices: departments
+            }
+        ])
+        .then(deptAnswer => {
+            const dept = deptAnswer.department;
+            
+            db.query(`SELECT SUM(salary) AS budget FROM role WHERE department_id = ?`, dept, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log("------");
+                console.table(res);
+    
+                toDo(); 
+            });
+        });
+    });
 }
