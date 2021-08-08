@@ -33,7 +33,16 @@ const toDo = () => {
             type: 'list',
             name: 'toDo',
             message: 'What would you like to do?',
-            choices: ['View All Employees', 'View All Roles', 'View All Departments', 'Add Employee', 'Add Role', 'Add Department', 'Update Employee Role']
+            choices: ['View All Employees', 
+                      'View All Roles', 
+                      'View All Departments', 
+                      'Add Employee', 
+                      'Add Role', 
+                      'Add Department', 
+                      'Update Employee Role', 
+                      'Update Employee Manager', 
+                      'View Employees by Manager', 
+                      'View Employees by Department']
         }
     ])
     .then(data => {
@@ -53,6 +62,12 @@ const toDo = () => {
             return addDepartment();
         } else if (toDo === 'Update Employee Role') {
             return updateEmployeeRole();
+        } else if (toDo === 'Update Employee Manager') {
+            return updateEmployeeManager();
+        } else if (toDo === 'View Employees by Manager') {
+            return viewByManager();
+        } else if (toDo === 'View Employees by Department') {
+            return viewByDepartment();
         }
     })
 };
@@ -171,13 +186,13 @@ const addEmployee = () => {
                         console.log(err);
                     }
                     const managers = res.map(({ id, first_name, last_name }) => ({name: first_name + " " + last_name, value: id}))
-
+                    managers.push({name:"None" , value: null})
                     inquirer.prompt([
                         {
                             type: 'list',
                             name: 'manager',
                             message: "Enter employee's manager",
-                            choices: managers
+                            choices: managers 
                         }
                     ])
                     .then(managerAnswer => {
@@ -321,7 +336,7 @@ const updateEmployeeRole = () => {
             const params = []
 
             params.push(emp);
-            console.log(params);
+            
             db.query(`SELECT * FROM role`, (err,res) => {
                 if(err) {
                     console.log(err)
@@ -339,8 +354,6 @@ const updateEmployeeRole = () => {
                 .then(roleAnswer => {
                     const role = roleAnswer.roles;
                     params.push(role);
-
-                    console.log(params)
                     
                     // change order of params in order to insert proper values into employee
                     params[0] = role;
@@ -360,4 +373,131 @@ const updateEmployeeRole = () => {
             })
         }) 
     })
+};
+
+const updateEmployeeManager = () => {
+    db.query(`SELECT * FROM employee`, (err, res) => {
+        if(err) {
+            console.log(err);
+        }
+        const employees = res.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: 'Select employee to update',
+                choices: employees
+            }
+        ])
+        .then(empAnswer => {
+            const emp = empAnswer.employee;
+            const params = []
+
+            params.push(emp);
+            
+            db.query(`SELECT * FROM employee WHERE manager_id IS NULL`, (err, res) => {
+                if (err) {
+                    console.log(err);
+                }
+                const managers = res.map(({ id, first_name, last_name }) => ({name: first_name + " " + last_name, value: id}))
+                managers.push({name:"None" , value: null})
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: "Enter employee's new manager",
+                        choices: managers 
+                    }
+                ])
+                .then(managerAnswer => {
+                    const manager = managerAnswer.manager
+                    params.push(manager);
+
+                    params[0] = manager;
+                    params[1] = emp;
+
+                    db.query(`UPDATE employee SET manager_id = ? WHERE id = ?`, params, (err, res) => {
+                        if(err) {
+                            console.log(err);
+                        }
+                        console.log("--------------------------------------");
+                        console.log("Employee manager successfully updated!");
+                        console.log("--------------------------------------");
+            
+                        toDo(); 
+                    })
+                });
+            });  
+        });
+    });  
+};
+
+const viewByManager = () => {
+    db.query(`SELECT * FROM employee WHERE manager_id IS NULL`, (err, res) => {
+        if (err) {
+            console.log(err);
+        }
+        const managers = res.map(({ id, first_name, last_name }) => ({name: first_name + " " + last_name, value: id}))
+        managers.push({name:"None" , value: null})
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'manager',
+                message: "Select manager",
+                choices: managers 
+            }
+        ])
+        .then(managerAnswer => {
+            const manager = managerAnswer.manager
+            params = manager
+
+            db.query(`Select CONCAT (first_name, " ", last_name) AS name From employee WHERE manager_id = ?`, params, (err, res) => {
+                if(err) {
+                    console.log(err);
+                }
+                console.log("------------");
+                console.table(res);
+    
+                toDo();
+            })
+        });
+    });
+};
+
+const viewByDepartment = () => {
+    db.query(`SELECT * FROM department`, (err, res) => {
+        if (err) {
+            console.log(err);
+        }
+        const department = res.map(({ id, name }) => ({name: name, value: id}))
+        
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'dept',
+                message: "Select department",
+                choices: department 
+            }
+        ])
+        .then(deptAnswer => {
+            const dept = deptAnswer.dept
+            console.log(dept)
+            
+            db.query(`Select CONCAT (first_name, " ", last_name) AS name 
+                      From employee
+                      LEFT JOIN role ON role.id = employee.role_id
+                      LEFT JOIN department ON department.id = role.department_id
+                      WHERE department.id = ?`,
+                      dept, (err, answer) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('--------------')
+                console.table(answer)
+                toDo();                 
+            })
+        });
+    });
 };
