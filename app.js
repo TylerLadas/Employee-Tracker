@@ -2,6 +2,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
+const chalk = require('chalk')
 
 // Package to protect password
 require('dotenv').config()
@@ -18,7 +19,9 @@ const db = mysql.createConnection(
 
 db.connect(err => {
     if (err) throw err;
-    console.log('\n Connected to the Employee Tracker database!\n')
+    console.log(chalk.redBright.bgBlue('---------------------------------------------'))
+    console.log(chalk.redBright.bgBlue.bold('|            Employee Tracker               |'))
+    console.log(chalk.redBright.bgBlue('---------------------------------------------'))
     toDo();
 });
 
@@ -297,10 +300,64 @@ const addRole = () => {
 
 // update employee prompts
 const updateEmployeeRole = () => {
-    inquirer
-    .prompt([
-        {
-            
+    
+    db.query(`SELECT * FROM employee`, (err, res) => {
+        if(err) {
+            console.log(err);
         }
-    ])
+        const employees = res.map(({ id, first_name, last_name }) => ({ name: first_name + " " + last_name, value: id }));
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: 'Select employee to update',
+                choices: employees
+            }
+        ])
+        .then(empAnswer => {
+            const emp = empAnswer.employee;
+            const params = []
+
+            params.push(emp);
+            console.log(params);
+            db.query(`SELECT * FROM role`, (err,res) => {
+                if(err) {
+                    console.log(err)
+                }
+                const roles = res.map(({id, title}) => ({name: title, value: id}))
+
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'roles',
+                        message: 'Select new role',
+                        choices: roles
+                    }
+                ])
+                .then(roleAnswer => {
+                    const role = roleAnswer.roles;
+                    params.push(role);
+
+                    console.log(params)
+                    
+                    // change order of params in order to insert proper values into employee
+                    params[0] = role;
+                    params[1] = emp;
+
+                    db.query(`UPDATE employee SET role_id = ? WHERE id = ?`, params, (err, res) => {
+                        if(err) {
+                        console.log(err)
+                        }
+                        console.log("-----------------------------------");
+                        console.log("Employee role successfully updated!");
+                        console.log("-----------------------------------");
+            
+                        toDo();    
+                    })
+                })
+            })
+        }) 
+    })
 };
